@@ -40,13 +40,16 @@ Garbage In, Garbage Out을 방지하기 위한 **데이터 신뢰성 확보** �
     *   cv=5 이상의 교차 검증을 **모든 후보 모델(Baseline 포함)**에 수행하여 공정한 비교 환경을 만듭니다.
 3.  **Baseline & Comparison**: 단순 모델(Logistic Regression)과 복잡한 모델(RF, XGB)을 비교합니다. 성능 차이가 미미하다면 **해석력(Explainability)**이 높은 모델을 우선합니다.
 4.  **Optimization**: 비즈니스 관점에서 중요한 metric(예: Recall이 중요한 암 진단 모델)을 기준으로 튜닝합니다.
+    *   **Metric Selection**: 단순 정확도(Accuracy)의 함정을 피하기 위해 **Precision, Recall, F1-Score, ROC-AUC**를 함께 확인합니다.
 
 ### 5단계: 해석 및 리포팅 (Interpret & Report)
 분석 결과를 **의사결정(Action)**으로 연결하는 단계입니다. **솔직함(Honesty)**이 효용성을 높입니다.
 
-1.  **Why & How Check**: "이 모델이 왜 이 점수를 냈는가?"를 **모델 안정성(CV 편차)**과 **과적합 여부**로 증명합니다.
+1.  **Validation Check & Metrics Analysis**:
+    *   **오차 행렬(Confusion Matrix)**을 통해 TN, FP, FN, TP의 분포를 직접 확인합니다.
+    *   "왜 이 모델을 선택했는가?"를 **안정성(CV)**, **과적합(Gap)**, **목표 지표(Recall/Precision)**로 설명합니다.
 2.  **Interpretation & Error Analysis**:
     *   **Feature Importance/SHAP**: 모델이 무엇을 중요하게 봤는지 설명합니다.
-    *   **Error Analysis**: 모델이 **틀린 케이스**를 분석하여 개선 포인트를 찾습니다.
+    *   **Error Analysis**: 모델이 **틀린 케이스(FP/FN)**를 심층 분석하여 비즈니스 리스크를 파악합니다.
 3.  **Caveats & Limitations (한계점)**: 데이터의 한계나 모델의 약점을 솔직하게 명시하여 신뢰도를 높입니다.
 4.  **Action Item**: 분석 결과를 바탕으로 **구체적인 비즈니스 실행 안**을 제안합니다.
