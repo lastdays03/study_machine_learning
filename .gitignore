@@ -19,3 +19,6 @@ Thumbs.db
 
 # Project Specific
 data/
+
+# Antigravity Agent Settings (Symlink)
+.agent
