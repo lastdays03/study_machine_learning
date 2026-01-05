@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/bagjongman/dev/workspace/study/python/study_machine_learning/notebooks/course_2/mlruns/313613744729093076/ab1fcfdf496a4a46aff99647a8aedba1/artifacts
+end_time: 1767581636206
+entry_point_name: ''
+experiment_id: '313613744729093076'
+lifecycle_stage: active
+run_id: ab1fcfdf496a4a46aff99647a8aedba1
+run_name: rogue-fish-401
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1767581636195
+status: 3
+tags: []
+user_id: bagjongman
