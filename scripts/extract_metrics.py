@@ -4,10 +4,11 @@ import os
 
 notebooks = [
     "docs/notebooks/EDA_01_heart_failure_study.ipynb",
-    "docs/notebooks/EDA_02_heart_failure_prediction.ipynb"
+    "docs/notebooks/EDA_02_heart_failure_prediction.ipynb",
+    "docs/notebooks/EDA_03_heart_failure_revisit.ipynb"
 ]
 
-metrics_pattern = r"(Accuracy|F1|Recall|AUC|F1-Score):?\s*(\d+\.\d+)"
+metrics_pattern = r"(Accuracy|F1|Recall|AUC|F1-Score|Precision):?\s*(\d+\.\d+)"
 model_name_pattern = r"\[(.*?)\]"
 
 results = {}
