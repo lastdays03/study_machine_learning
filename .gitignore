@@ -22,3 +22,28 @@ data/
 
 # Antigravity Agent Settings (Symlink)
 .agent
+
+# IDE Settings
+.vscode/
+.idea/
+
+# Environment Variables
+.env
+.env.local
+
+# Build & Distribution
+build/
+dist/
+*.egg-info/
+
+# Testing & Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Linting & Type Checking
+.mypy_cache/
+.ruff_cache/
+
+# Logs
+*.log
