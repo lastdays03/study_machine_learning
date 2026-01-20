@@ -1,187 +1,195 @@
 import nbformat as nbf
-from nbconvert.preprocessors import ExecutePreprocessor
 import os
 
-# Create a new notebook
+# Define the notebook structure
 nb = nbf.v4.new_notebook()
 
-# Define the content of the notebook cells
-cells = []
+# Title and Objective
+text_intro = """# Seoul Real Estate & Infrastructure Analysis (2025)
 
-# 1. Imports
-cells.append(nbf.v4.new_markdown_cell("# Heart Failure Prediction Analysis\n\n## 1. Environment Setup"))
-cells.append(nbf.v4.new_code_cell("""
-import pandas as pd
+## 1. Objective
+Analyze the relationship between **2025 Seoul Real Estate Prices** and **Infrastructure Accessibility** (Bus, Subway, Hospital, School, Park).
+
+## 2. Check Environment & Font
+"""
+
+code_font = """import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
-from sklearn.metrics import classification_report, confusion_matrix, f1_score, recall_score
-from IPython.display import display
-import warnings
+import platform
+import os
 
-warnings.filterwarnings('ignore')
-%matplotlib inline
+# OS check and Font setting
+system_name = platform.system()
+if system_name == 'Darwin': # Mac
+    plt.rc('font', family='AppleGothic')
+elif system_name == 'Windows': # Windows
+    plt.rc('font', family='Malgun Gothic')
+else: # Linux
+    plt.rc('font', family='NanumGothic')
 
-# Set aesthetic style
-sns.set_style("whitegrid")
-plt.rcParams['figure.figsize'] = (10, 6)
-"""))
+# Minus sign fix
+plt.rcParams['axes.unicode_minus'] = False
 
-# 2. Data Loading & Profiling
-cells.append(nbf.v4.new_markdown_cell("## 2. Data Loading & Quality Check"))
-cells.append(nbf.v4.new_code_cell("""
-# Load dataset
-try:
-    df = pd.read_csv('../../data/heart_failure_clinical_records_dataset.csv')
-    print("Dataset loaded successfully.")
-except FileNotFoundError:
-    print("Error: File not found.")
-    df = None
+print(f"OS: {system_name}")
+"""
 
-if df is not None:
-    # Basic Info
-    print("Dataset Shape:", df.shape)
-    print("\\nInfo:")
-    df.info()
+text_load = """## 3. Data Loading
+Load the 6 datasets using `cp949` encoding.
+"""
 
-    print("\\nMissing Values:")
-    print(df.isnull().sum())
+code_load = """# Paths
+data_dir = '../../data'
 
-    print("\\nHead:")
-    display(df.head())
+files = {
+    'bus': '버스.csv',
+    'hospital': '병원.csv',
+    'real_estate': '서울시 부동산 실거래가 정보 2025.csv',
+    'subway': '지하철.csv',
+    'school': '학교.csv',
+    'park': '공원.csv'
+}
 
-    print("\\nDescription:")
-    display(df.describe())
-"""))
+dfs = {}
 
-# 3. EDA
-cells.append(nbf.v4.new_markdown_cell("## 3. Exploratory Data Analysis (EDA)"))
-cells.append(nbf.v4.new_code_cell("""
-if df is not None:
-    # Target Distribution
-    plt.figure(figsize=(6, 4))
-    sns.countplot(x='DEATH_EVENT', data=df)
-    plt.title('Distribution of Target Variable (DEATH_EVENT)')
-    plt.show()
+for key, filename in files.items():
+    path = os.path.join(data_dir, filename)
+    try:
+        dfs[key] = pd.read_csv(path, encoding='cp949')
+        print(f"Loaded {key}: {dfs[key].shape}")
+    except Exception as e:
+        print(f"Failed to load {key}: {e}")
 
-    print("Death Event Ratio:")
-    print(df['DEATH_EVENT'].value_counts(normalize=True))
-    
-    # Correlation Matrix
-    plt.figure(figsize=(12, 10))
-    sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt='.2f')
-    plt.title('Correlation Matrix')
-    plt.show()
+# Quick Check
+for key, df in dfs.items():
+    print(f"\\n--- {key} ---")
+    print(df.head(2))
+"""
 
-    # Age vs Death Event
-    plt.figure(figsize=(10, 6))
-    sns.histplot(data=df, x='age', hue='DEATH_EVENT', kde=True, element="step")
-    plt.title('Age Distribution by Death Event')
-    plt.show()
-    
-    # Pairplot for selected features
-    selected_features = ['age', 'ejection_fraction', 'serum_creatinine', 'serum_sodium', 'DEATH_EVENT']
-    sns.pairplot(df[selected_features], hue='DEATH_EVENT')
-    plt.show()
-"""))
+text_preprocess = """## 4. Preprocessing & Feature Engineering (Gu-level Aggregation)
 
-# 4. Modeling
-cells.append(nbf.v4.new_markdown_cell("## 4. Modeling & Evaluation"))
-cells.append(nbf.v4.new_code_cell("""
-if df is not None:
-    # Feature Selection & Split
-    X = df.drop('DEATH_EVENT', axis=1)
-    y = df['DEATH_EVENT']
+### 4.1. Real Estate (Target)
+- Filter valid transactions.
+- Group by `자치구명` (District) and calculate **Average Transaction Price**.
+"""
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-    print(f"Train Shape: {X_train.shape}, Test Shape: {X_test.shape}")
+code_preprocess_real_estate = """df_re = dfs['real_estate']
 
-    models = {
-        'Logistic Regression': LogisticRegression(random_state=42, max_iter=1000),
-        'Random Forest': RandomForestClassifier(random_state=42),
-        'XGBoost': XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='logloss')
-    }
+# Check columns
+print(df_re.columns)
 
-    results = {}
+# Filter for Seoul (Code 11...) if needed, but data seems to be Seoul only based on title
+# Group by '자치구명'
+# Ensure price column is numeric. '물건금액(만원)'
+df_re_gu = df_re.groupby('자치구명')['물건금액(만원)'].mean().reset_index()
+df_re_gu.rename(columns={'물건금액(만원)': 'Avg_Price'}, inplace=True)
+print(df_re_gu.head())
+"""
 
-    for name, model in models.items():
-        print(f"Training {name}...")
-        # Pipeline for scaling
-        pipeline = Pipeline([
-            ('scaler', StandardScaler()),
-            ('classifier', model)
-        ])
-        
-        # Stratified K-Fold CV
-        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-        scores = cross_val_score(pipeline, X_train, y_train, cv=cv, scoring='f1')
-        
-        pipeline.fit(X_train, y_train)
-        y_pred = pipeline.predict(X_test)
-        
-        results[name] = {
-            'CV F1 Mean': scores.mean(),
-            'Test F1': f1_score(y_test, y_pred),
-            'Test Recall': recall_score(y_test, y_pred),
-            'Model': pipeline
-        }
-        
-        print(f"{name} CV F1: {scores.mean():.4f}")
-        print(f"{name} Test F1: {f1_score(y_test, y_pred):.4f}")
-        print("-" * 30)
-"""))
+text_preprocess_infra = """### 4.2. Infrastructure Counts by Gu
+- Parse addresses to extract `자치구명`.
+- Count facilities per Gu.
+"""
 
-# 5. Result Summary
-cells.append(nbf.v4.new_markdown_cell("## 5. Result Summary"))
-cells.append(nbf.v4.new_code_cell("""
-if df is not None:
-    res_df = pd.DataFrame(results).T[['CV F1 Mean', 'Test F1', 'Test Recall']]
-    display(res_df)
+code_preprocess_infra = """# Function to extract Gu from address
+def extract_gu(address):
+    if pd.isna(address):
+        return None
+    # Address format usually "서울(특별시) XX구 ..."
+    tokens = str(address).split()
+    for token in tokens:
+        if token.endswith('구'):
+            return token
+    return None
 
-    # Feature Importance (Random Forest)
-    # Access the classifier step from the pipeline
-    rf_model = results['Random Forest']['Model'].named_steps['classifier']
-    importances = rf_model.feature_importances_
-    indices = np.argsort(importances)[::-1]
-    features = X.columns
-    
-    plt.figure(figsize=(10, 6))
-    plt.title("Feature Importances (Random Forest)")
-    plt.bar(range(X.shape[1]), importances[indices], align="center")
-    plt.xticks(range(X.shape[1]), features[indices], rotation=90)
-    plt.xlim([-1, X.shape[1]])
-    plt.tight_layout()
-    plt.show()
-"""))
+# 1. Hospital
+df_hosp = dfs['hospital']
+df_hosp['Gu'] = df_hosp['도로명주소'].apply(extract_gu)
+hosp_counts = df_hosp.groupby('Gu').size().reset_index(name='Hospital_Count')
 
-nb.cells = cells
+# 2. Subway
+df_sub = dfs['subway']
+# Use '도로명주소' or '지번주소'
+df_sub['Gu'] = df_sub['도로명주소'].apply(extract_gu)
+sub_counts = df_sub.groupby('Gu').size().reset_index(name='Subway_Count')
 
-# Save and Execute
-notebook_path = 'docs/notebooks/EDA_01_heart_failure_prediction.ipynb'
-with open(notebook_path, 'w') as f:
+# 3. School
+df_school = dfs['school']
+df_school['Gu'] = df_school['소재지도로명주소'].apply(extract_gu)
+school_counts = df_school.groupby('Gu').size().reset_index(name='School_Count')
+
+# 4. Park
+df_park = dfs['park']
+# Park often has missing addresses, check '소재지도로명주소' or '소재지지번주소'
+df_park['Gu'] = df_park['소재지도로명주소'].fillna(df_park['소재지지번주소']).apply(extract_gu)
+park_counts = df_park.groupby('Gu').size().reset_index(name='Park_Count')
+
+# 5. Bus
+# Bus data (dfs['bus']) often lacks simple address. It has '정류장명', '위도', '경도'.
+# Mapping lat/lon to Gu requires reverse geocoding or spatial join.
+# For Phase 1, we might SKIP Bus count by Gu unless we have a mapping logic.
+# Let's try to see if '도시명' or '관리도시명' helps, or simply omit for Gu-level summary if too complex without shapefiles.
+print("Bus data columns:", dfs['bus'].columns)
+# Use '도시명' to see if we can filter Seoul
+print(dfs['bus']['도시명'].unique()[:10])
+"""
+
+text_merge = """## 5. Merging Data
+Combine Real Estate Prices with Infrastructure Counts.
+"""
+
+code_merge = """# Base: Real Estate Gu
+merged_df = df_re_gu.copy()
+
+# Merge all counts
+for df_count in [hosp_counts, sub_counts, school_counts, park_counts]:
+    # Ensure Gu naming is consistent (e.g. '노원구')
+    merged_df = pd.merge(merged_df, df_count, left_on='자치구명', right_on='Gu', how='left')
+    # Drop the redundant 'Gu' column from the right immediately
+    merged_df.drop(columns=['Gu', 'Gu_x', 'Gu_y'], inplace=True, errors='ignore')
+
+# Fill NaN with 0 (no facility found)
+merged_df.fillna(0, inplace=True)
+print(merged_df.head())
+"""
+
+text_eda = """## 6. EDA & Correlation Analysis
+"""
+
+code_eda = """# Correlation Matrix
+corr_matrix = merged_df.select_dtypes(include=[np.number]).corr()
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('Correlation: Real Estate Price vs Infrastructure')
+plt.show()
+
+# Pairplot
+sns.pairplot(merged_df)
+plt.show()
+"""
+
+# cells
+nb.cells = [
+    nbf.v4.new_markdown_cell(text_intro),
+    nbf.v4.new_code_cell(code_font),
+    nbf.v4.new_markdown_cell(text_load),
+    nbf.v4.new_code_cell(code_load),
+    nbf.v4.new_markdown_cell(text_preprocess),
+    nbf.v4.new_code_cell(code_preprocess_real_estate),
+    nbf.v4.new_markdown_cell(text_preprocess_infra),
+    nbf.v4.new_code_cell(code_preprocess_infra),
+    nbf.v4.new_markdown_cell(text_merge),
+    nbf.v4.new_code_cell(code_merge),
+    nbf.v4.new_markdown_cell(text_eda),
+    nbf.v4.new_code_cell(code_eda)
+]
+
+# Save
+output_path = 'docs/notebooks/Seoul_Infrastructure_Analysis.ipynb'
+os.makedirs(os.path.dirname(output_path), exist_ok=True)
+with open(output_path, 'w', encoding='utf-8') as f:
     nbf.write(nb, f)
 
-print(f"Notebook generated at {notebook_path}. Executing...")
-
-ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
-
-# Set path for execution
-try:
-    ep.preprocess(nb, {'metadata': {'path': 'docs/notebooks/'}})
-    print("Execution successful.")
-except Exception as e:
-    print(f"Execution failed: {e}")
-    # Still save the notebook to show partial output or errors
-    with open(notebook_path, 'w') as f:
-        nbf.write(nb, f)
-    raise e
-
-# Save executed notebook
-with open(notebook_path, 'w') as f:
-    nbf.write(nb, f)
+print(f"Created notebook at {output_path}")
